@@ -1,0 +1,17 @@
+##################### Solr-fabric Configuration Example #####################
+
+# This file contains an overview of various configuration settings
+
+
+
+#################################### Node #####################################
+"solr.hosts" : ["logstash@192.168.0.174", "logstash@192.168.0.176"]
+
+"dataset.hosts" : ["logstash@192.168.0.174", "logstash@192.168.0.176"]
+"dataset.hosts.password" : "hello.logstash"
+
+
+#################################### Paths ####################################
+
+"path.data" : "/home/logstash/snowdrop/snowdrop-load-example"
+"path.data.dir" : "data"

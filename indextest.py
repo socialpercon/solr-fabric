@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # coding: utf-8
+import json
 import yaml
 import sys
 import argparse
@@ -16,15 +17,15 @@ config = yaml.safe_load(f)
 filedaemon_parser = argparse.ArgumentParser()
 
 @run_multiple
-def filedaemon(*agrs, **kwargs):
-    run('python %s/multi_file_daemon.py %s/%s' % config['path.data'], config['path.data'], config['path.data.dir'])
+def filedaemon():
+    run('python %s/filedaemon/multi_file_daemon.py %s/%s' % (config['path.data'], config['path.data'], config['path.data.dir']))
 
 def multi_filedaemon():
     filedaemon(hosts=config['dataset.hosts'])
 
 @run_multiple
 def put_filedaemon(*agrs, **kwargs):
-    put('./scripts/multi_file_daemon.py', config['path.data'], use_sudo=False)
+    put('./scripts/filedaemon', config['path.data'], use_sudo=False)
 
 def multi_put_filedaemon():
     put_filedaemon(hosts=config['dataset.hosts'])
@@ -32,7 +33,7 @@ def multi_put_filedaemon():
 #post.jar copy and execute for count on filedaemon
 post_parser = argparse.ArgumentParser()
 @run_multiple
-def post(*agrs, **kwargs):
+def post():
     run('%s/start-post.sh' % config['path.data'])
 
 def multi_post():
@@ -42,18 +43,25 @@ def multi_post():
 def put_post_script():
     put('./scripts/post.sh', config['path.data'], use_sudo=False)
 
-def multi_put_script(*args, **kwargs):
+def multi_put_script():
     put_post_script(hosts=config['dataset.hosts'])
 
 #dataset???
 send_parser = argparse.ArgumentParser()
-def send(args, help=False):
-    #put()
+@run_multiple
+def send(args):
+    put(args, config['path.data'], use_sudo=False)
 
+def target_send():
+    temp = config['path.source']
+    for target in temp:
+        send(target.items()[0][0], host=target.items()[0][1])
 
 def print_help(*args):
     if len(args) == 0:
         print "usage:"
+
+
 
 
 def run_cmd(args):

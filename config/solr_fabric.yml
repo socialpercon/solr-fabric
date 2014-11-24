@@ -13,6 +13,8 @@
 
 #################################### Paths ####################################
 
+"solr.home" : "/home/logstash/snowdrop/thirdparty/solr/example"
+
 "path.data" : "/home/logstash/snowdrop/snowdrop-load-example"
 "path.data.dir" : "data"
 "path.source" : [{'./_source200' : 'logstash@192.168.0.174'}, {'./_source200' : 'logstash@192.168.0.176'}]

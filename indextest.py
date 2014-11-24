@@ -8,7 +8,8 @@ import os
 from fabric.api import env
 from fabrication.util.fabrickit import *
 
-f = open("./config/solr_fabric.yml", 'r')
+dir = os.path.dirname( os.path.abspath( __file__ ) )
+f = open("%s/config/solr_fabric.yml" % dir, 'r')
 config = yaml.safe_load(f)
 
 
@@ -25,7 +26,7 @@ def multi_filedaemon():
 
 @run_multiple
 def put_filedaemon(*agrs, **kwargs):
-    put('./scripts/filedaemon', config['path.data'], use_sudo=False)
+    put('%s/scripts/filedaemon' % dir, config['path.data'], use_sudo=False)
 
 def multi_put_filedaemon():
     put_filedaemon(hosts=config['dataset.hosts'])
@@ -41,9 +42,9 @@ def multi_post():
 
 @run_multiple
 def put_post_script():
-    put('./scripts/post.sh', config['path.data'], use_sudo=False)
+    put('%s/scripts/post.sh' % dir, config['path.data'], use_sudo=False)
 
-def multi_put_script():
+def multi_put_post_script():
     put_post_script(hosts=config['dataset.hosts'])
 
 #dataset???
@@ -57,12 +58,25 @@ def target_send():
     for target in temp:
         send(target.items()[0][0], host=target.items()[0][1])
 
+@run_multiple
+def start_solr():
+    str = '%s/solr_clear_restart.sh' % config['solr.home']
+    run(str)
+
+def multi_start_solr():
+    temp = config['solr.hosts']
+    start_solr(hosts=temp)
+
+@run_multiple
+def put_solr_script():
+    put('%s/scripts/solr_clear_restart.sh' % dir, config['solr.home'], use_sudo=False)
+
+def multi_put_solr_script():
+    put_solr_script(hosts=config['solr.hosts'])
+
 def print_help(*args):
     if len(args) == 0:
         print "usage:"
-
-
-
 
 def run_cmd(args):
     getattr(args[0])

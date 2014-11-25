@@ -19,7 +19,12 @@ filedaemon_parser = argparse.ArgumentParser()
 
 @run_multiple
 def filedaemon():
-    run('python %s/filedaemon/multi_file_daemon.py %s/%s' % (config['path.data'], config['path.data'], config['path.data.dir']))
+    #"dtach -n `mktemp -u /tmp/{}.XXXX` {}".format(sockname, cmd)
+    cmd = 'python %s/filedaemon/multi_file_daemon.py %s/%s' % (config['path.data'], config['path.data'], config['path.source'][env.host_string])
+    temp = '%s/filedaemon/filedaemon.sock' % config['path.data']
+    run("dtach -n {} {}".format(temp, cmd))
+    #run('cd %s/filedaemon && nohup ./filedaemon.sh &' % (config['path.data']), pty=False)
+    #run('nohup %s/filedaemon/filedaemon.sh %s/filedaemon/multi_file_daemon.py %s/%s &' % (config['path.data'], config['path.data'], config['path.data'], config['path.data.dir']), pty=False)
 
 def multi_filedaemon():
     filedaemon(hosts=config['dataset.hosts'])
@@ -30,6 +35,27 @@ def put_filedaemon(*agrs, **kwargs):
 
 def multi_put_filedaemon():
     put_filedaemon(hosts=config['dataset.hosts'])
+
+
+@run_multiple
+def attach():
+    temp = '%s/filedaemon/filedaemon.sock' % config['path.data']
+    run("dtach -a {}".format(temp))
+
+
+def attach_filedaemon(args, help=False):
+    attach(host=args.host)
+
+
+@run_multiple
+def _kill_filedaemon():
+    temp = '%s/filedaemon/filedaemon.sock' % config['path.data']
+    run('rm %s' % temp)
+    run('ps axf | grep "multi_file_daemon.py" | grep -v grep | awk \'{print "kill -9 " $1}\' | sh', pty=False)
+
+def kill_filedaemon(help=False):
+    _kill_filedaemon(hosts=config['dataset.hosts'])
+
 
 #post.jar copy and execute for count on filedaemon
 post_parser = argparse.ArgumentParser()
@@ -59,13 +85,24 @@ def target_send():
         send(target.items()[0][0], host=target.items()[0][1])
 
 @run_multiple
-def start_solr():
-    str = '%s/solr_clear_restart.sh' % config['solr.home']
-    run(str)
+def _kill_solr():
+    # Solr
+    temp = '%s/solr.sock' % config['solr.home']
+    run('rm %s' % temp)
+    run('ps axf | grep "start.jar" | grep -v grep | awk \'{print "kill -9 " $1}\' | sh')
 
-def multi_start_solr():
+
+
+@run_multiple
+def _solr():
+    with cd(config['solr.home']):
+        cmd = 'java -DSTOP.PORT=8079 -DSTOP.KEY=stopkey -Dsolr.solr.home=multicore -jar start.jar'
+        temp = '%s/solr.sock' % config['solr.home']
+        run("dtach -n {} {}".format(temp, cmd))
+
+def solr_start():
     temp = config['solr.hosts']
-    start_solr(hosts=temp)
+    _solr(hosts=temp)
 
 @run_multiple
 def put_solr_script():

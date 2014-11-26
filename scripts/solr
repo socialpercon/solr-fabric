@@ -1,0 +1,67 @@
+#!/bin/sh -e
+
+NAME="solr"
+SOLR_DIR="/home/logstash/snowdrop/thirdparty/solr-4.9.0-copied/example"
+PIDFILE="$SOLR_DIR/pid/solr-production.pid"
+LOG_FILE="$SOLR_DIR/solr-production.log"
+SOLR_DATA="$SOLR_DIR/multicore/default"
+JAVA_OPTIONS="-Xms32g -Xmx40g -DSTOP.PORT=8079 -DSTOP.KEY=stopkey -Dsolr.solr.home=multicore -jar start.jar"
+JAVA="/home/logstash/snowdrop/thirdparty/java/bin/java"
+
+start() {
+  echo -n "Starting $NAME... "
+  if [ -f $PIDFILE ]; then
+    echo "is already running!"
+  else
+    cd $SOLR_DIR
+    $JAVA $JAVA_OPTIONS 2> $LOG_FILE &
+    sleep 2
+    echo `ps -ef | grep -v grep | grep java | awk '{print $2}'` > $PIDFILE
+    echo "(Done)"
+  fi
+  return 0
+}
+
+stop() {
+  echo -n "Stopping $NAME... "
+  if [ -f $PIDFILE ]; then
+    cd $SOLR_DIR
+    $JAVA $JAVA_OPTIONS --stop
+    sleep 2
+    rm $PIDFILE
+    echo "(Done)"
+  else
+    echo "can not stop, it is not running!"
+  fi
+  return 0
+}
+
+clean() {
+  cd $SOLR_DATA
+  files=$(find . -name conf -prune -o -print)
+  goodNames="${files// /\\ }"
+  rm -rf $goodNames 
+  echo "(Done)"
+  return 0
+}
+
+case "$1" in
+  start)
+    start
+  ;;
+  stop)
+    stop
+  ;;
+  restart)
+    stop
+    sleep 5
+    start
+  ;;
+  clean)
+    clean
+  ;;
+*)
+echo "Usage: $0 (start | stop | restart)"
+exit 1
+;;
+esac
